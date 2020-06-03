@@ -1,10 +1,11 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import vad from 'voice-activity-detection';
 import MediaStreamRecorder, { StereoAudioRecorder } from 'msr';
 
 export const VAD = () => {
 
     let audioContext;
+    const [mediaStream, setMediaStream] = useState(undefined);
 
     const requestMic = () => {
         try {
@@ -28,40 +29,49 @@ export const VAD = () => {
     }
 
     const startUserMedia = (stream) => {
+        setMediaStream(stream);
+
         let recordedChunks = [];
-
         const mediaRecorder = new MediaStreamRecorder(stream);
+        mediaRecorder.mimeType = "audio/wav";
         mediaRecorder.recorderType = StereoAudioRecorder;
+        mediaRecorder.ondataavailable = (e) => recordedChunks.push(e);
 
-        mediaRecorder.ondataavailable = (e) => {
-            recordedChunks.push(e);
-        };
-
-        if (audioContext && stream) {
-            vad(
-                audioContext,
-                stream,
-                {
-                    onVoiceStart: () => {
-                        console.log("voice started");
-                        mediaRecorder.start(50);
-                    },
-                    onVoiceStop: () => {
-                        console.log("voice stopped");
-                        mediaRecorder.stop();
-                        console.log(recordedChunks);
+        vad(
+            audioContext,
+            stream,
+            {
+                onVoiceStart: () => {
+                    console.log(mediaStream);
+                    mediaRecorder.start(50);
+                },
+                onVoiceStop: () => {
+                    mediaRecorder.stop();
+                    try {
+                        mediaRecorder.save();
                         recordedChunks = [];
-                    },
-                    onUpdate: (val) => {
+                    } catch (e) {
+                        console.warn("failed to save file from blob.");
                     }
-                }
-            );
-        }
+                },
+            }
+        );
+    }
+
+    const handleStop = () => {
+        mediaStream.stop();
+        setMediaStream(undefined);
     }
 
     return (
         <div>
-            <button onClick={() => requestMic()}>testing</button>
+            {
+                mediaStream === undefined ? (
+                    <button onClick={() => requestMic()}>press to start voice activity detection.</button>
+                ) : (
+                    <button onClick={() => handleStop()}>press to stop voice activity detection.</button>
+                )
+            }
         </div>
     )
 }

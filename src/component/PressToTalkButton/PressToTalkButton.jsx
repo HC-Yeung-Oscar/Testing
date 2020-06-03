@@ -1,5 +1,6 @@
 import React, {useState} from 'react';
 import { ReactMic } from 'react-mic';
+import './PressToTalkButton.css';
 
 export const PressToTalkButton = () => {
     
@@ -16,25 +17,45 @@ export const PressToTalkButton = () => {
     const onData = (blob) => {
     }
     
+    const saveData = (function () {
+        var a = document.createElement("a");
+        document.body.appendChild(a);
+        a.style = "display: none";
+        return function (data, fileName) {
+            const url = window.URL.createObjectURL(data);
+            a.href = url;
+            a.download = fileName;
+            a.click();
+            window.URL.revokeObjectURL(url);
+        };
+    }());
+    
     const onStop = (blob) => {
+        console.log(blob);
+        saveData(blob.blob, "testing.wav");
     }
 
     return (
         <div>
+            {/* hidden button */}
             <ReactMic
+                className="react-mic"
                 mimeType="audio/wav"
                 record={isRecording}
                 onStop={onStop}
                 onData={onData}
             />
-            <div>
-                <button onClick={() => {
-                    startRecording();
-                }}>start recording</button>
-                <button onClick={() => {
-                    stopRecording();
-                }}>stop recording</button>
-            </div>
+            {
+                isRecording ? (
+                    <button onClick={() => {
+                        stopRecording();
+                    }}>press to stop recording</button>
+                ) : (
+                    <button onClick={() => {
+                        startRecording();
+                    }}>press to start recording</button>
+                )
+            }
         </div>
     );
 }

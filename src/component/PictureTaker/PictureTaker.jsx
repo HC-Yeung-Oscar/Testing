@@ -6,7 +6,7 @@ export const PictureTaker = () => {
 
     const handleTakePhoto = (dataUri) => {
         console.log("photo has been taken.");
-        console.log(JSON.stringify(dataUri, null, 4));
+        console.log(dataUri);
     }
 
     return (
